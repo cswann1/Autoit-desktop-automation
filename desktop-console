@@ -1,0 +1,180 @@
+#cs ----------------------------------------------------------------------------
+
+ AutoIt Version: 3.3.12.0
+ Author:         Craig Swann
+
+ Script Function:
+	Template AutoIt script.
+
+	Application definition:  A GUI based control panel for launching applications and automatically providing inputs required for use.
+	Application scope:  Machine and user specific.
+
+#ce ----------------------------------------------------------------------------
+
+#include <GUIConstantsEx.au3>
+#include <MsgBoxConstants.au3>
+#include <Clipboard.au3>
+#include <IE.au3>
+
+
+Opt("GUIOnEventMode", 1)
+
+Local $hmainGUI = GUICreate("Desktop Console", 400, 140)
+Local $idSNAP = GUICtrlCreateButton("SNAP", 120, 20, 65, 25)
+Local $idDELL = GUICtrlCreateButton("Dell Portal", 190, 20, 85, 25)
+Local $idconsole = GUICtrlCreateButton("Console.exe", 10, 60, 85, 25)
+Local $idsccm = GUICtrlCreateButton("SCCM", 100, 60, 85, 25)
+Local $idprtmngr = GUICtrlCreateButton("Print Manager", 190, 60, 95, 25)
+Local $idregedit = GUICtrlCreateButton("Regedit", 290, 60, 75, 25)
+Local $idactivedir = GUICtrlCreateButton("Call Me", 140, 100, 90, 25)
+GUICtrlSetOnEvent ($idSNAP, (SNAPButton))
+GUICtrlSetOnEvent ($idDELL, (DELLButton))
+GUICtrlSetOnEvent ($idconsole,(CONSOLEButton))
+GUICtrlSetOnEvent ($idsccm,(SCCMButton))
+GUICtrlSetOnEvent ($idprtmngr, (PMButton))
+GUICtrlSetOnEvent ($idregedit, (REButton))
+GUICtrlSetOnEvent ($idactivedir, (IPButton))
+GUISetOnEvent ($GUI_EVENT_CLOSE, "CLOSEButton")
+GUISetState(@SW_SHOW, $hmainGUI)
+
+
+ Func Dell_Login ()
+	Local $username = ("user_name")
+	Local $password = ("password")
+	Global $oIE = _IECreate ("https://nsoutside.us.dell.com/vpn/index.html")
+	$oForm = _IEFormGetObjByName ($oIE, "vpnForm")
+	$ogetun = _IEFormElementGetObjByName ($oForm, "login")
+    $ogetpw = _IEFormElementGetObjByName ($oForm, "passwd")
+	$oButton=_IEGetObjById($oIE,"LOg_On")
+	_IEFormElementSetValue ($ogetun,$username)
+	_IEFormElementSetValue ($ogetpw,$password)
+    _IEAction ($oButton, "click")
+    _IELoadWait($oIE,0)
+	Run("C:\Program Files\Dell\Defender\Soft Token for Windows\DefenderDesktopToken.exe","")
+ EndFunc
+
+Func SnapLogon ()
+	$oIE2 = _IECreate ("https://ascensionprod.service-now.com/welcome.do",@SW_MAXIMIZE)
+	Local $username = ("user_name")
+	Local $password = ("password")
+	Local $userfield = _IEGetObjByName($oIE2, "user_name")
+	Local $passwordfield = _IEGetObjByName($oIE2, "user_password")
+	$osubmit=_IEGetObjById($oIE2,"sysverb_login")
+	_IEFormElementSetValue ($userfield,"user_name")
+	_IEFormElementSetValue ($passwordfield,"password")
+    _IEAction ($osubmit, "click")
+    _IELoadWait($oIE,0)
+ EndFunc
+
+ Func DellApps()
+	 Local $appslink = _IEGetObjById ($oIE,"folderLink_0")
+	 _IEAction ($appslink,"click")
+ EndFunc
+
+ Func LaunchApps ()
+	 Local $Lync = _IEGetObjById ($oIE, "idCitrix.MPS.App.XenAppUS.Lync2010")
+	 Local $Outlook = _IEGetObjById ($oIE, "idCitrix.MPS.App.XenAppUS.Outlook_00202010")
+	 _IEAction ($Lync, "click")
+	 _IEAction ($Outlook, "click")
+ EndFunc
+
+Func CONSOLEButton()
+	$ConsoleBox = MsgBox (1,"CMD Prompt", "Launching Command Window")
+	If $ConsoleBox == 1 Then
+		Local $iPID=Run("C:\Windows\System32\cmd.exe","")
+	   Else
+	EndIf
+EndFunc
+
+Func SNAPButton ()
+   $SnapBox = MsgBox(1, "SNAP Launcher", "Launching SNAP")
+   If $SnapBox == 1 Then
+       Local $iPID = Run("C:\Users\rswan004\Documents\SNAP\SNAP.exe","")
+	   sleep(6000)
+	   MouseMove (1950,400)
+	   MouseClick("left")
+	   #cs Send ("user_name")
+	   Send ("{TAB}")
+	   sleep(1000)
+	   Send ("passowrd",1)
+	   Sleep(1000)
+	   MouseMove (2355,360)
+	   MouseClick("left")
+	   Sleep(4000)
+	   MouseMove (1950,500)
+	   Sleep(4000)
+	   #CE MouseClick("left")
+	 Else
+	EndIf
+EndFunc
+
+
+Func DELLButton ()
+   $DellBox = MsgBox(1, "Dell Citrix", "Launching Dell Portal")
+   If $DellBox == 1 Then
+	   Call ("Dell_Login")
+	   Sleep (2000)
+	   Send ("{Enter}")
+	   Call ("DellApps")
+	   Call ("LaunchApps")
+	Else
+   EndIf
+EndFunc
+
+Func SCCMButton()
+	$SCCMBox = MsgBox (1,"SCCM", "Launching SCCM")
+	If $SCCMBox == 1 Then
+		Local $iPID = Run("C:\Users\rswan004\Desktop\rc.exe","")
+	   Else
+	EndIf
+EndFunc
+
+Func PMButton()
+	$PMBox = MsgBox (1,"Print Manager", "Launching Print Manager")
+	If $PMBox == 1 Then
+		Run("mmc printmanagement.msc", @SystemDir)
+	   Else
+	EndIf
+EndFunc
+
+Func REButton()
+	$REBox = MsgBox (1,"Registry Editor", "Launching Regedit")
+	If $REBox == 1 Then
+		Run("C:\Windows\System32\regedt32.exe","")
+	   Else
+	EndIf
+EndFunc
+#cs ----------------------------------------------------------------------------
+
+The IPButton was an unused button that I repurposed to copy a small
+executable to a users C:\ drive. The executable simply displays a dialogue box
+on the users desktop with a message telling them who I am and asking them to 
+call me.  Once the exectuable is coppied it is run remotely with a psexec
+command.
+
+#ce ----------------------------------------------------------------------------
+
+
+Func IPButton()
+	local $ipaddress = InputBox ("Get IP", "Enter IP Address,")
+	Local Const $sFilePath = "C:\Users\rswan004\Documents\AutoIt\Callme.exe"
+	Local Const $sRemotePath = "\\"& $ipaddress &"\c$"
+    If $ipaddress  Then
+	   FileCopy($sFilePath, $sRemotePath, $FC_NOOVERWRITE)
+	   Sleep(5000)
+		Local $iPID=Run("C:\Windows\System32\cmd.exe","")
+		Sleep(2000)
+		Send ("psexec \\" & $ipaddress & " -s -i -u administrator -p *password* C:\Callme.exe",1)
+		Sleep (1000)
+		Send ("{Enter}")
+	   Else
+	EndIf
+EndFunc
+
+While 1
+   Sleep(100)
+WEnd
+
+Func CLOSEButton()
+   Exit
+   EndFunc
